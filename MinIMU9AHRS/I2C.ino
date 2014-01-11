@@ -36,7 +36,7 @@ LSM303 compass;
 
 void I2C_Init()
 {
-  Wire.begin();
+  Wire.begin(14, 15);
 }
 
 void Gyro_Init()

@@ -1,4 +1,4 @@
-h1. Pololu MinIMU-9 + Arduino AHRS (Attitude and Heading Reference System)
+h1. Pololu MinIMU-9 + Robotis CM-900 (originally for Arduino) AHRS (Attitude and Heading Reference System)
 
 Version: 1.2.2
 Release Date: 2013-11-27
@@ -6,7 +6,7 @@ Release Date: 2013-11-27
 
 h2. Summary
 
-This is a program (sketch) for the "Arduino":http://pololu.com/catalog/product/2191 that interfaces with the Pololu MinIMU-9 inertial measurement units:
+This is a program (sketch) for the "Robotis CM-900 series":http://www.robotsource.org/bs/bd.php?bt=forum_CM9DeveloperWorld that interfaces with the Pololu MinIMU-9 inertial measurement units:
 
 * "MinIMU-9 v2 &#40;L3GD20 and LSM303DLHC carrier)":http://www.pololu.com/catalog/product/1268
 * "MinIMU-9 &#40;L3G4200D and LSM303DLM carrier)":http://www.pololu.com/catalog/product/1265 (discontinued)
@@ -14,17 +14,19 @@ This is a program (sketch) for the "Arduino":http://pololu.com/catalog/product/2
 
 It also works with the "AltIMU-10 &#40;L3GD20, LSM303DLHC, and LPS331AP carrier)":http://www.pololu.com/catalog/product/1269, although the output from the LPS331AP barometer is not used.
 
-This Arduino program processes the raw rotation, acceleration, and magnetic data from the MinIMU-9 to derive an estimate of the board's absolute orientation, which it outputs through the Arduino's serial interface, turning the MinIMU-9 and Arduino into an attitude and heading reference system (AHRS).
+This program processes the raw rotation, acceleration, and magnetic data from the MinIMU-9 to derive an estimate of the board's absolute orientation, which it outputs through the CM-900's USB interface, turning the MinIMU-9 and CM-900 into an attitude and heading reference system (AHRS).
 
-A Python test program is also included. It communicates with the Arduino serially and displays a 3D representation of the MinIMU-9 board, allowing you to visualize the output of the AHRS in real time.
+A Python test program is also included. It communicates with the CM-900 serially and displays a 3D representation of the MinIMU-9 board, allowing you to visualize the output of the AHRS in real time.
 
-Both the Arduino software and Python test program are based on "sf9domahrs":http://code.google.com/p/sf9domahrs/ by Doug Weibel and Jose Julio, which is in turn based on "ArduIMU":http://code.google.com/p/ardu-imu/ v1.5 by Jordi Munoz, William Premerlani, Jose Julio, and Doug Weibel.
+Both the CM-900 software and Python test program are based on "sf9domahrs":http://code.google.com/p/sf9domahrs/ by Doug Weibel and Jose Julio, which is in turn based on "ArduIMU":http://code.google.com/p/ardu-imu/ v1.5 by Jordi Munoz, William Premerlani, Jose Julio, and Doug Weibel.
 
 h2. Getting Started
  
 h3. Software
 
-The Arduino program uses Pololu's "L3G":https://github.com/pololu/L3G and "LSM303":https://github.com/pololu/LSM303 Arduino libraries, which can also be downloaded from GitHub. Follow the instructions on their respective pages to install the libraries.
+I will probably not find all the places where the original code mentions the Arduino, but this fork is really adapted to the CM-900.
+
+The CM-900 program uses Pololu's/mine "L3G":https://github.com/mw46d/l3g-cm9 and "LSM303":https://github.com/mw46d/lsm303-cm9 Arduino/CM-900 libraries, which can also be downloaded from GitHub. Follow the instructions on their respective pages to install the libraries.
 
 The Python test program also has several dependencies you must install before you can run it:
 
@@ -33,48 +35,36 @@ The Python test program also has several dependencies you must install before yo
 * "pyserial":http://sourceforge.net/projects/pyserial/files/pyserial/ (direct link: "pyserial-2.5.win32.exe":http://sourceforge.net/projects/pyserial/files/pyserial/2.5/pyserial-2.5.win32.exe/download)
 * "VPython 5":http://vpython.org/contents/download_windows.html (direct link: "VPython-Win-Py2.7-5.74.exe":http://vpython.org/contents/download/VPython-Win-Py2.7-5.74.exe)
 
-After you have set up the prerequisites, download the archive from "GitHub":https://github.com/pololu/MinIMU-9-Arduino-AHRS and decompress it.
+I used the Python program on Ubuntu 13.04 (64bit) with the following pieces:
+
+* Python2.7 - The system version
+* "wxPython-src-3.0.0.0":http://www.wxpython.org/ - Build from source. This needs a lot of dependencies. But they are just an apt-get away;-)
+* "VPython-wx 6":http://sourceforge.net/projects/vpythonwx/files/6.05-release/vpython-wx-src.6.05b.zip/download - Another build endevor;-)
+ 
+After you have set up the prerequisites, download the archive from "GitHub":https://github.com/mw46d/minimu-9-ahrs-cm9 and decompress it.
 
 h3. Hardware
 
 Make the following connections with wires between the Arduino and the MinIMU-9:
 
-h4. Arduino Uno R3, Leonardo, Mega 2560
+h4. CM-900
 
-pre. Arduino      MinIMU-9
----------------------
-     5V  ->  VIN
-    GND  ->  GND
-    SDA  ->  SDA
-    SCL  ->  SCL
+pre.           CM-900      MinIMU-9
+------------------------------------
+                 3.3V  ->  VIN
+                  GND  ->  GND
+       Digital Pin 15  ->  SCL
+       Digital Pin 14  ->  SDA
 
-h4. Arduino Micro
+Other pin assignments will probably work as well. You will just have to adapt the Wire.begin() statements accordingly.
 
-pre. Arduino      MinIMU-9
----------------------
-     5V  ->  VIN
-    GND  ->  GND
-      2  ->  SDA
-      3  ->  SCL
-
-h4. Arduino Uno (up to R2), Duemilanove, etc.
-
-pre. Arduino      MinIMU-9
----------------------
-     5V  ->  VIN
-    GND  ->  GND
-     A4  ->  SDA
-     A5  ->  SCL
-
-Unfortunately, this sketch does not function properly on the Arduino Due, so we do not recommend running this sketch on an Arduino Due.
-        
 h3. Using the AHRS
 
 From the Arduino environment, open MinIMU9AHRS.ino, which can be found in the MinIMU9AHRS folder.
 
 By default, the Arduino code treats the positive X axis of the MinIMU-9 as forward and the negative Z axis as up (so that the components are on the bottom of the board and the silkscreen is on top). If you want the positive Z axis to be up instead (so that the components are on top), find the definition of @SENSOR_SIGN[9]@ at the beginning of MinIMU9AHRS.ino and uncomment the appropriate line (after commenting the original).
 
-To ensure that the heading derived from the compass is accurate, you should change the @M_X_MIN@ through @M_Z_MAX@ calibration constants to appropriate values. You can use the Calibrate example from the "LSM303 library":https://github.com/pololu/LSM303 to find the right values for your board.
+To ensure that the heading derived from the compass is accurate, you should change the @M_X_MIN@ through @M_Z_MAX@ calibration constants to appropriate values. You can use the Calibrate example from the "LSM303 library":https://github.com/mw46d/lsm303-cm9 to find the right values for your board.
 
 In the Tools menu, select the appropriate board and serial port. Click the "Upload" button to compile the sketch and load it onto your Arduino.
 

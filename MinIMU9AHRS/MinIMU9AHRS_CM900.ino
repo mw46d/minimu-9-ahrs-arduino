@@ -67,12 +67,12 @@ int SENSOR_SIGN[9] = {1,1,1,-1,-1,-1,1,1,1}; //Correct directions x,y,z - gyro, 
 
 // LSM303 magnetometer calibration constants; use the Calibrate example from
 // the Pololu LSM303 library to find the right values for your board
-#define M_X_MIN -421
-#define M_Y_MIN -639
-#define M_Z_MIN -238
-#define M_X_MAX 424
-#define M_Y_MAX 295
-#define M_Z_MAX 472
+#define M_X_MIN -326
+#define M_Y_MIN -426
+#define M_Z_MIN -1255
+#define M_X_MAX 366
+#define M_Y_MAX 629
+#define M_Z_MAX -97
 
 #define Kp_ROLLPITCH 0.02
 #define Ki_ROLLPITCH 0.00002
@@ -87,8 +87,6 @@ int SENSOR_SIGN[9] = {1,1,1,-1,-1,-1,1,1,1}; //Correct directions x,y,z - gyro, 
 //#define PRINT_DCM 0     //Will print the whole direction cosine matrix
 #define PRINT_ANALOGS 0 //Will print the analog raw data
 #define PRINT_EULER 1   //Will print the Euler angles Roll, Pitch and Yaw
-
-#define STATUS_LED 13 
 
 float G_Dt=0.02;    // Integration time (DCM algorithm)  We will run the integration loop at 50Hz if possible
 
@@ -150,73 +148,75 @@ float Temporary_Matrix[3][3]={
     0,0,0  }
 };
  
-void setup()
-{ 
-  Serial.begin(115200);
-  pinMode (STATUS_LED,OUTPUT);  // Status LED
+void setup() { 
+  SerialUSB.begin();
+  pinMode (BOARD_LED_PIN, OUTPUT);  // Status LED
   
   I2C_Init();
 
-  Serial.println("Pololu MinIMU-9 + Arduino AHRS");
+  SerialUSB.println("Pololu MinIMU-9 + CM-900 AHRS");
 
-  digitalWrite(STATUS_LED,LOW);
+  digitalWrite(BOARD_LED_PIN, LOW);
   delay(1500);
- 
+  
   Accel_Init();
   Compass_Init();
   Gyro_Init();
   
   delay(20);
   
-  for(int i=0;i<32;i++)    // We take some readings...
-    {
+  for (int i = 0; i < 32; i++) {   // We take some readings...
     Read_Gyro();
     Read_Accel();
-    for(int y=0; y<6; y++)   // Cumulate values
+    for (int y = 0; y < 6; y++) {  // Cumulate values
       AN_OFFSET[y] += AN[y];
-    delay(20);
     }
     
-  for(int y=0; y<6; y++)
-    AN_OFFSET[y] = AN_OFFSET[y]/32;
+    delay(20);
+  }
     
-  AN_OFFSET[5]-=GRAVITY*SENSOR_SIGN[5];
+  for (int y = 0; y < 6; y++) {
+    AN_OFFSET[y] = AN_OFFSET[y] / 32;
+  }
   
-  //Serial.println("Offset:");
-  for(int y=0; y<6; y++)
-    Serial.println(AN_OFFSET[y]);
+  AN_OFFSET[5] -= GRAVITY * SENSOR_SIGN[5];
+  
+  SerialUSB.println("Offset:");
+
+  for (int y = 0; y < 6; y++) {
+    SerialUSB.println(AN_OFFSET[y]);
+  }
   
   delay(2000);
-  digitalWrite(STATUS_LED,HIGH);
+  digitalWrite(BOARD_LED_PIN, HIGH);
     
-  timer=millis();
+  timer = millis();
   delay(20);
-  counter=0;
+  counter = 0;
 }
 
-void loop() //Main Loop
-{
-  if((millis()-timer)>=20)  // Main loop runs at 50Hz
-  {
+void loop() { //Main Loop
+  if ((millis() - timer) >= 20) { // Main loop runs at 50Hz
     counter++;
     timer_old = timer;
-    timer=millis();
-    if (timer>timer_old)
-      G_Dt = (timer-timer_old)/1000.0;    // Real time of loop run. We use this on the DCM algorithm (gyro integration time)
-    else
+    timer = millis();
+    if (timer > timer_old) {
+      G_Dt = (timer-timer_old) / 1000.0;    // Real time of loop run. We use this on the DCM algorithm (gyro integration time)
+    }
+    else {
       G_Dt = 0;
-    
+    }
+ 
     // *** DCM algorithm
     // Data adquisition
     Read_Gyro();   // This read gyro data
     Read_Accel();     // Read I2C accelerometer
     
-    if (counter > 5)  // Read compass data at 10Hz... (5 loop runs)
-      {
+    if (counter > 5) { // Read compass data at 10Hz... (5 loop runs)
       counter=0;
       Read_Compass();    // Read I2C magnetometer
       Compass_Heading(); // Calculate magnetic heading  
-      }
+    }
     
     // Calculations...
     Matrix_update(); 
@@ -227,5 +227,4 @@ void loop() //Main Loop
    
     printdata();
   }
-   
 }

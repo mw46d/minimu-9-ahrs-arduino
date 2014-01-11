@@ -46,7 +46,7 @@ from time import time
 grad2rad = 3.141592/180.0
 
 # Check your COM port and baud rate
-ser = serial.Serial(port='COM9',baudrate=115200, timeout=1)
+ser = serial.Serial(port='/dev/ttyACM0',baudrate=115200, timeout=1)
 
 # Main scene
 scene=display(title="Pololu MinIMU-9 + Arduino AHRS")
@@ -111,6 +111,7 @@ roll=0
 pitch=0
 yaw=0
 while 1:
+    rate(100)
     line = ser.readline()
     if line.find("!ANG:") != -1:          # filter out incomplete (invalid) lines
         line = line.replace("!ANG:","")   # Delete "!ANG:"
@@ -127,6 +128,7 @@ while 1:
 
             axis=(cos(pitch)*cos(yaw),-cos(pitch)*sin(yaw),sin(pitch)) 
             up=(sin(roll)*sin(yaw)+cos(roll)*sin(pitch)*cos(yaw),sin(roll)*cos(yaw)-cos(roll)*sin(pitch)*sin(yaw),-cos(roll)*cos(pitch))
+
             platform.axis=axis
             platform.up=up
             platform.length=1.0
